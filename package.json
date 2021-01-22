@@ -1,11 +1,17 @@
 {
   "name": "iu-media-manager",
-  "version": "0.1.0",
+  "productName": "IU Media Manager",
+  "author": "BRAIDEN S. PSIUK",
+  "version": "1.0.0",
+  "main": "electron/main.js",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.3",
     "@testing-library/user-event": "^12.6.2",
+    "dropbox": "^8.2.0",
+    "electron": "^11.2.0",
+    "obs-websocket-js": "^4.0.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "4.0.1",
