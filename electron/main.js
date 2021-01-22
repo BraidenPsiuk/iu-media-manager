@@ -26,14 +26,6 @@ const CLIENT_SECRET = "";
 let mainWindow;
 let authWindow;
 
-cp.execSync("drutil tray eject"); // Eject any disks from tray at startup
-cp.execSync("mkdir -p ~/Library/Application\\ Support/IU\\ Video\\ Uploader && cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader && mkdir -p store/video/video-pre store/video/video-post store/video/video-concat store/bin");
-cp.execSync("cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader && rm -rf store/video");
-cp.execSync("cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader && mkdir -p store/video/video-pre store/video/video-post store/video/video-concat");
-try {
-    cp.execSync("! test -f ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/bin/ffmpeg && cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/bin && curl -O https://braiden.net/bin/ffmpeg && chmod +x ffmpeg");
-} catch {}
-
 
 let isIdle = true;
 
@@ -53,7 +45,7 @@ app.on("ready", () => {
             webSecurity: false // BAD PRACTICE, SEE: https://stackoverflow.com/questions/45554249/playing-local-mp4-file-in-electron
         }
     });
-    mainWindow.hide();
+    // mainWindow.hide();
 
     const notify = (title, body) => {
         mainWindow.webContents.send("notification-event", {
@@ -64,25 +56,25 @@ app.on("ready", () => {
     const alert = (data) => {
         mainWindow.webContents.send("alert-event", data);
     };
-    const iosNotifyCopying = () => {
-        mainWindow.webContents.send("iosNotificationCopying-event");
-    };
-    const iosNotifyProcessing = () => {
-        mainWindow.webContents.send("iosNotificationProcessing-event");
-    };
+    // const iosNotifyCopying = () => {
+    //     mainWindow.webContents.send("iosNotificationCopying-event");
+    // };
+    // const iosNotifyProcessing = () => {
+    //     mainWindow.webContents.send("iosNotificationProcessing-event");
+    // };
     const setProcessingMessage = (message) => {
         mainWindow.webContents.send("processing-event", message);
     };
     const setUploadable = (bool) => {
         mainWindow.webContents.send("uploadButton-event", bool);
     }
-    const loadVideoSrc = (bool) => {
-        if (bool) {
-            mainWindow.webContents.send("video-event", `file://${os.homedir()}/Library/Application Support/IU Video Uploader/store/video/video-concat/final.mp4`);
-        } else {
-            mainWindow.webContents.send("video-event", null);
-        }
-    }
+    // const loadVideoSrc = (bool) => {
+    //     if (bool) {
+    //         mainWindow.webContents.send("video-event", `file://${os.homedir()}/Library/Application Support/IU Video Uploader/store/video/video-concat/final.mp4`);
+    //     } else {
+    //         mainWindow.webContents.send("video-event", null);
+    //     }
+    // }
 
     mainWindow.loadURL(process.env.ELECTRON_START_URL || url.format({
         pathname: path.join(__dirname, "../index.html"),
@@ -90,178 +82,100 @@ app.on("ready", () => {
         slashes: true,
     }));
 
-    watch("/Volumes", (event, path) => {
-        switch (path) {
-            case "/Volumes/DVD_VIDEO_RECORDER": // DVD
-                switch (event) {
-                    case "update":
-                        if (isIdle) {
-                            isIdle = false;
-                            console.log("DVD inserted");
-                            mainWindow.show();
-                            mainWindow.webContents.send("removableStorage-event", {
-                                event: "inserted",
-                                storageType: "DVD"
-                            });
-                            mainWindow.webContents.send("upload-event", null);
-                            loadVideoSrc(false);
-                            setProcessingMessage("Removing old videos from processing directories...");
-                            cp.exec("rm -f ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre/* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre/.[!.]* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-post/* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-post/.[!.]* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/.[!.]*", () => {
-                                // Wait for files on disk to become available
-                                while (!fs.existsSync("/Volumes/DVD_VIDEO_RECORDER/VIDEO_TS/VTS_01_1.VOB")){}
-                                setProcessingMessage("Copying VOB files from disk...");
-                                cp.exec(`cp ${path}/VIDEO_TS/*_1.VOB ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre`, ()=> {
-                                    notify("Copying Completed", "You may take the disk while the videos are being converted.");
-                                    iosNotifyCopying();
-                                    cp.exec("drutil tray eject");
-                                    setProcessingMessage("Converting VOB files to MP4 file...");
-                                    fs.readdir(`${os.homedir()}/Library/Application Support/IU Video Uploader/store/video/video-pre`, (err, files) => {
-                                        let ffmpegCommand = "";
-                                        files.forEach((fileName) => {
-                                            const i = fileName.substring(4, fileName.length - 6);
-                                            ffmpegCommand += `./ffmpeg -i ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre/VTS_${i}_1.VOB -acodec ${VIDEO_CODEC} -ac 2 -ar 22050 ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-post/${Number(i)}.mp4 && `;
-                                        });
-                                        ffmpegCommand = "cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/bin && " + ffmpegCommand.substring(0, ffmpegCommand.length - 4);
-                                        // console.log("ffmpegCommand:\n"+ffmpegCommand);
-                                        cp.exec(ffmpegCommand, () => {
-                                            let concatCommand = "";
-                                            for (let i=1; i<=files.length; i++) {
-                                                concatCommand += `file '../video-post/${i}.mp4'\n`;
-                                            }
-                                            concatCommand = `cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat && echo "${concatCommand.substring(0, concatCommand.length-1)}" > files.txt`;
-                                            cp.exec(concatCommand, () => {
-                                                cp.exec("cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/bin && ./ffmpeg -f concat -safe 0 -i ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/files.txt -c copy ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/final.mp4", () => {
-                                                    mainWindow.show();
-                                                    notify("Conversion Completed", "You may now upload the video to YouTube.");
-                                                    iosNotifyProcessing();
-                                                    setProcessingMessage("Processing completed");
-                                                    setUploadable(true);
-                                                    loadVideoSrc(true);
-                                                });
-                                            });
-                                        });
-                                    });
-                                });
-                            });
-                        } else {
-                            console.log("DVD inserted, but main process is busy");
-                            cp.exec("drutil tray eject");
-                        }
-                        break;
-                    case "remove":
-                        console.log("DVD removed");
-                        mainWindow.webContents.send("removableStorage-event", {
-                            event: "removed",
-                            storageType: ""
-                        });
-                        break;
-                }
-                break;
-            case "/Volumes/FLASH_DRIVE": // Flash drive
-                switch (event) {
-                    case "update":
-                        console.log("Flash drive inserted");
-                        mainWindow.show();
-                        mainWindow.webContents.send("removableStorage-event", {
-                            event: "inserted",
-                            storageType: "Flash Drive"
-                        });
-                        break;
-                    case "remove":
-                        console.log("Flash drive removed");
-                        mainWindow.webContents.send("removableStorage-event", {
-                            event: "removed",
-                            storageType: ""
-                        });
-                        break;
-                }
-                break;
-            default: // Something else
-                console.log("Some action occured with another path");
-                break;
-        }
-    });
+    // watch("/Volumes", (event, path) => {
+    //     switch (path) {
+    //         case "/Volumes/DVD_VIDEO_RECORDER": // DVD
+    //             switch (event) {
+    //                 case "update":
+    //                     if (isIdle) {
+    //                         isIdle = false;
+    //                         console.log("DVD inserted");
+    //                         mainWindow.show();
+    //                         mainWindow.webContents.send("removableStorage-event", {
+    //                             event: "inserted",
+    //                             storageType: "DVD"
+    //                         });
+    //                         mainWindow.webContents.send("upload-event", null);
+    //                         loadVideoSrc(false);
+    //                         setProcessingMessage("Removing old videos from processing directories...");
+    //                         cp.exec("rm -f ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre/* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre/.[!.]* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-post/* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-post/.[!.]* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/* ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/.[!.]*", () => {
+    //                             // Wait for files on disk to become available
+    //                             while (!fs.existsSync("/Volumes/DVD_VIDEO_RECORDER/VIDEO_TS/VTS_01_1.VOB")){}
+    //                             setProcessingMessage("Copying VOB files from disk...");
+    //                             cp.exec(`cp ${path}/VIDEO_TS/*_1.VOB ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre`, ()=> {
+    //                                 notify("Copying Completed", "You may take the disk while the videos are being converted.");
+    //                                 iosNotifyCopying();
+    //                                 cp.exec("drutil tray eject");
+    //                                 setProcessingMessage("Converting VOB files to MP4 file...");
+    //                                 fs.readdir(`${os.homedir()}/Library/Application Support/IU Video Uploader/store/video/video-pre`, (err, files) => {
+    //                                     let ffmpegCommand = "";
+    //                                     files.forEach((fileName) => {
+    //                                         const i = fileName.substring(4, fileName.length - 6);
+    //                                         ffmpegCommand += `./ffmpeg -i ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-pre/VTS_${i}_1.VOB -acodec ${VIDEO_CODEC} -ac 2 -ar 22050 ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-post/${Number(i)}.mp4 && `;
+    //                                     });
+    //                                     ffmpegCommand = "cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/bin && " + ffmpegCommand.substring(0, ffmpegCommand.length - 4);
+    //                                     // console.log("ffmpegCommand:\n"+ffmpegCommand);
+    //                                     cp.exec(ffmpegCommand, () => {
+    //                                         let concatCommand = "";
+    //                                         for (let i=1; i<=files.length; i++) {
+    //                                             concatCommand += `file '../video-post/${i}.mp4'\n`;
+    //                                         }
+    //                                         concatCommand = `cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat && echo "${concatCommand.substring(0, concatCommand.length-1)}" > files.txt`;
+    //                                         cp.exec(concatCommand, () => {
+    //                                             cp.exec("cd ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/bin && ./ffmpeg -f concat -safe 0 -i ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/files.txt -c copy ~/Library/Application\\ Support/IU\\ Video\\ Uploader/store/video/video-concat/final.mp4", () => {
+    //                                                 mainWindow.show();
+    //                                                 notify("Conversion Completed", "You may now upload the video to YouTube.");
+    //                                                 iosNotifyProcessing();
+    //                                                 setProcessingMessage("Processing completed");
+    //                                                 setUploadable(true);
+    //                                                 loadVideoSrc(true);
+    //                                             });
+    //                                         });
+    //                                     });
+    //                                 });
+    //                             });
+    //                         });
+    //                     } else {
+    //                         console.log("DVD inserted, but main process is busy");
+    //                         cp.exec("drutil tray eject");
+    //                     }
+    //                     break;
+    //                 case "remove":
+    //                     console.log("DVD removed");
+    //                     mainWindow.webContents.send("removableStorage-event", {
+    //                         event: "removed",
+    //                         storageType: ""
+    //                     });
+    //                     break;
+    //             }
+    //             break;
+    //         case "/Volumes/FLASH_DRIVE": // Flash drive
+    //             switch (event) {
+    //                 case "update":
+    //                     console.log("Flash drive inserted");
+    //                     mainWindow.show();
+    //                     mainWindow.webContents.send("removableStorage-event", {
+    //                         event: "inserted",
+    //                         storageType: "Flash Drive"
+    //                     });
+    //                     break;
+    //                 case "remove":
+    //                     console.log("Flash drive removed");
+    //                     mainWindow.webContents.send("removableStorage-event", {
+    //                         event: "removed",
+    //                         storageType: ""
+    //                     });
+    //                     break;
+    //             }
+    //             break;
+    //         default: // Something else
+    //             console.log("Some action occured with another path");
+    //             break;
+    //     }
+    // });
 
     ipcMain.on("button-upload", (event, data) => {
-        setProcessingMessage("Authenticating...");
-        getPort((err, port)=>{
-            const authObj = new google.auth.OAuth2(
-                // "960542957303-6ajp9a7n1tc94igrm74sugtevggsp1v0.apps.googleusercontent.com", // Client ID
-                // "sVARglusnqHSxvizK-tB7k3D", // Client Secret
-                `${CLIENT_ID}`,
-                `${CLIENT_SECRET}`,
-                `http://localhost:${port}` // Redirect URL (LOOPBACK)
-            );
-            const authUrl = authObj.generateAuthUrl({
-                access_type: "offline",
-                scope: "https://www.googleapis.com/auth/youtube.upload"
-            });
-            const authCallbackServer = express();
-            authCallbackServer.get("/", (req, res)=>{
-                authWindow.destroy();
-                authWindow = null;
-                if (req.query.code) {
-                    authObj.getToken(req.query.code).then((res)=>{
-                        authObj.credentials = res.tokens;
-                        const youtube = google.youtube({
-                            version: "v3",
-                            auth: authObj
-                        });
-                        const fileName = `${os.homedir()}/Library/Application Support/IU Video Uploader/store/video/video-concat/final.mp4`;
-                        const fileSize = fs.statSync(fileName).size;
-
-                        youtube.videos.insert({
-                            part: "id,snippet,status",
-                            notifySubscribers: false,
-                            requestBody: {
-                                snippet: {
-                                    title: data.videoTitle,
-                                    description: data.videoDescription
-                                },
-                                status: {
-                                    privacyStatus: data.videoIsPublic ? "public" : "unlisted"
-                                }
-                            },
-                            media: {
-                                body: fs.createReadStream(fileName)
-                            }
-                        }, {
-                            // Use the `onUploadProgress` event from Axios to track the
-                            // number of bytes uploaded to this point.
-                            onUploadProgress: evt => {
-                                const progress = (evt.bytesRead / fileSize) * 100;
-                                readline.clearLine(process.stdout, 0);
-                                readline.cursorTo(process.stdout, 0, null);
-                                process.stdout.write(`${Math.round(progress)}% complete`);
-                                setProcessingMessage(`Uploading... (${Math.round(progress)}%)`);
-                            }
-                        }).then((data)=>{
-                            setProcessingMessage(null);
-                            notify("Uploading Completed", "Your video is ready to be shared.");
-                            mainWindow.webContents.send("upload-event", `https://youtu.be/${data.data.id}`);
-                            loadVideoSrc(false);
-                            isIdle = true;
-                        });
-                    });
-                } else {
-                    alert("Error: Authorization failed. Please allow access next time!");
-                }
-            });
-            authCallbackServer.listen(port, ()=>{
-                authWindow = new BrowserWindow({
-                    width: AUTH_WINDOW_WIDTH,
-                    height: AUTH_WINDOW_HEIGHT,
-                    resizable: false,
-                    fullscreenable: false,
-                    frame: false
-                });
-                authWindow.setAlwaysOnTop(true);
-                authWindow.loadURL(authUrl, {userAgent: "Chrome"});
-                authWindow.on("closed", () => {
-                    authWindow = null;
-                });
-            });
-        });
+        console.log("pressed");
     });
 
     app.on("activate", () => {
@@ -275,10 +189,10 @@ app.on("ready", () => {
     });
 
     ipcMain.on("button-test-copying", () => {
-        iosNotifyCopying();
+        // iosNotifyCopying();
     });
     ipcMain.on("button-test-processing", () => {
-        iosNotifyProcessing();
+        // iosNotifyProcessing();
     });
 
     ipcMain.on("button-hide", () => {
