@@ -15,7 +15,7 @@ git clone https://github.com/Braiden-Psiuk/iu-media-manager.git
   ```
 - Development (starting up):
   ```bash
-  npm start & sleep 5 && npm run start-electron &
+  npm run start-win & sleep 5 ; npm run start-electron-win
   ```
 - Development (shutting down):
   ```bash
@@ -31,4 +31,5 @@ git clone https://github.com/Braiden-Psiuk/iu-media-manager.git
 - Test building the project for Windows 7 on an old I5 machine, Windows 8, OSX, and Ubuntu
 - Create 'preferences' pane to set DBX key
 - Upgrade "typeface-roboto" solution to something newer, as this is now deprecated
+- Add breathing effect to recording icon (https://jsfiddle.net/2z37swj9)
 - Add app screenshots to the readme
