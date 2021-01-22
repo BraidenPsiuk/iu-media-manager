@@ -30,4 +30,5 @@ git clone https://github.com/Braiden-Psiuk/iu-media-manager.git
 - Create some new test scripts, or add existing ones to a folder to organize them a bit
 - Test building the project for Windows 7 on an old I5 machine, Windows 8, OSX, and Ubuntu
 - Create 'preferences' pane to set DBX key
+- Upgrade "typeface-roboto" solution to something newer, as this is now deprecated
 - Add app screenshots to the readme

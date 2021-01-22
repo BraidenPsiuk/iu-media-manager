@@ -6,6 +6,8 @@
   "main": "electron/main.js",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^4.11.2",
+    "@material-ui/icons": "^4.11.2",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.3",
     "@testing-library/user-event": "^12.6.2",
@@ -14,11 +16,17 @@
     "obs-websocket-js": "^4.0.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.1",
+    "typeface-roboto": "^1.1.13",
+    "video-react": "^0.14.1",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start-bash": "export BROWSER=none ; react-scripts start",
+    "start-win": "set BROWSER=none && react-scripts start",
+    "start-electron-bash": "export ELECTRON_START_URL=http://localhost:3000 && electron .",
+    "start-electron-win": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
