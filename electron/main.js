@@ -1,4 +1,5 @@
 /* eslint-disable default-case */
+
 const {
     app,
     BrowserWindow,
@@ -7,34 +8,31 @@ const {
 const fs = require("fs");
 const path = require("path");
 const url = require("url");
+
 // const watch = require("node-watch");
 // const os = require("os");
 // const cp = require("child_process");
-// const { google } = require("googleapis");
 // const readline = require("readline");
 // const { getPort } = require("portfinder");
 // const express = require("express");
 
-const VIDEO_CODEC = "libmp3lame"; // aac, copy - https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2296
+// const VIDEO_CODEC = "libmp3lame"; // aac, copy - https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2296
+
 const MAIN_WINDOW_WIDTH = 850;
 const MAIN_WINDOW_HEIGHT = 660;
 const AUTH_WINDOW_WIDTH = 800;
 const AUTH_WINDOW_HEIGHT = 600;
-const CLIENT_ID = "";
-const CLIENT_SECRET = "";
 
 let mainWindow;
 let authWindow;
 
-
 let isIdle = true;
 
 app.on("ready", () => {
-
     mainWindow = new BrowserWindow({
         width: MAIN_WINDOW_WIDTH,
         height: MAIN_WINDOW_HEIGHT,
-        resizable: false,
+        resizable: true,
         fullscreenable: false,
         frame: false,
         // transparent: true,
@@ -79,8 +77,9 @@ app.on("ready", () => {
     mainWindow.loadURL(process.env.ELECTRON_START_URL || url.format({
         pathname: path.join(__dirname, "../index.html"),
         protocol: "file:",
-        slashes: true,
+        slashes: true
     }));
+    // mainWindow.loadURL('https://codepen.io/BraidenPsiuk/live/868914c87ba96a43520429184446ec87');
 
     // watch("/Volumes", (event, path) => {
     //     switch (path) {
