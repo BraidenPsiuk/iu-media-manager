@@ -24,6 +24,8 @@ import {
   CircularProgress,
 } from '@material-ui/core';
 
+import Autocomplete from '@material-ui/lab/Autocomplete';
+
 import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -61,6 +63,16 @@ const innerViewTheme = createMuiTheme({
     }
   }
 });
+
+const sampleClientNames = [
+  { name: 'Kendra Wilson' },
+  { name: 'Sherry Johnstone' },
+  { name: 'Candice Cilio' },
+  { name: 'Kaitlyn Wright' },
+  { name: 'Jenny Rogers CCNEEDED' },
+  { name: 'Kelly Wilkins SPC' },
+  { name: 'Sharon Elsburg' },
+];
 
 const cardMargin = 8;
 const cardStyle = {
@@ -141,7 +153,7 @@ export default class App extends React.Component {
 
 
 
-              {/* <Typography variant="h5" color="textPrimary" gutterBottom>Video Settings</Typography>
+                {/* <Typography variant="h5" color="textPrimary" gutterBottom>Video Settings</Typography>
                 <TextField error={!this.state.videoTitle.length} helperText={!this.state.videoTitle.length ? "You must enter a title for the video." : ""} value={this.state.videoTitle} margin={"dense"} onChange={e => {
                   this.setState({ videoTitle: e.target.value.toUpperCase() });
                 }} fullWidth label="Title" variant="outlined" />
@@ -168,9 +180,31 @@ export default class App extends React.Component {
                   </AccordionSummary>
                   <AccordionDetails>
                     <Typography>
-                      Provide information on the client.
+                      Provide information about the client
                     </Typography>
                   </AccordionDetails>
+
+
+                  <Grid container>
+                    <Grid item xs={12}>
+                      <Card style={cardStyle}>
+                        <CardContent>
+                          <Autocomplete
+                            style={{width: "25em"}}
+                            id="autocomplete-box"
+                            freeSolo
+                            options={sampleClientNames.map((option) => option.name)}
+                            renderInput={(params) => (
+                              <TextField {...params} label="Client Name" margin="normal" variant="outlined" />
+                            )}
+                          />
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+
+
+
                 </Accordion>
                 <Accordion expanded={this.state.expandedAccordion === 2} onChange={() => {
                   this.setState({ expandedAccordion: (this.state.expandedAccordion === 2) ? 0 : 2 });
